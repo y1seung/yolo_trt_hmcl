@@ -14,6 +14,7 @@ from utils import timeit_ros
 import Queue as queue
 
 
+
 class YOLORos(object):
     def __init__(self):
         self._bridge = CvBridge()
@@ -34,11 +35,13 @@ class YOLORos(object):
         rospy.loginfo("[trt_yolo_ros] loaded and ready")
         rospy.loginfo("init yolo")
         self.depth_sub_switch=False
+        self.count_tmp = 1
         
 
     def _read_params(self):
         """ Reading parameters for YOLORos from launch or yaml files """
         self.publish_image = rospy.get_param("~publish_image", False)
+        self.print_outcome = rospy.get_param("~print_outcome", False)
         # default paths to weights from different sources
         self.weights_path = rospy.get_param("~weights_path", "./weights/")
         self.config_path = rospy.get_param("~config_path", "./config/")
@@ -93,7 +96,7 @@ class YOLORos(object):
                 buff_size=2 ** 24,
             )
         rospy.logdebug("[trt_yolo_ros] publishers and subsribers initialized")
-        self.pointcloud_sub = rospy.Subscriber("/camera/depth/color/points",PointCloud2,self._pointcloud_callback,queue_size=2)
+        self.pointcloud_sub = rospy.Subscriber("/camera/depth/color/points",PointCloud2,self._pointcloud_callback,queue_size=20)
         self.pointcloud_data = PointCloud2()
         self._tfpub = tf.TransformBroadcaster()
         self._tfsub = tf.TransformListener()
@@ -113,7 +116,8 @@ class YOLORos(object):
         """ populate output message with input header and bounding boxes information """
         if boxes is None:
             return None
-        rospy.loginfo("pc_list len = " + str(len(boxes)))
+        if self.print_outcome:
+            rospy.loginfo("pc_list len = " + str(len(boxes)))
         for box, score, category in zip(boxes, scores, classes):
             # Populate darknet message
             left, bottom, right, top = box
@@ -127,25 +131,31 @@ class YOLORos(object):
             detection_results.bounding_boxes.append(detection_msg)
             y_center = int(bottom - ((bottom - top) / 2))
             x_center = int(right - ((right - left) / 2))       
-            rospy.loginfo("x_center = " + str(x_center))
-            rospy.loginfo("y_center = " + str(y_center))
-            if self.depth_sub_switch is None:  
-                rospy.loginfo("recoeved")
-                pc_list = list(pc2.read_points(self.pointcloud_data,skip_nans=True,field_names=('x', 'y', 'z'),uvs=[(x_center, y_center)]))
-                
-                rospy.loginfo("pc_list len = " + str(len(pc_list)))
-                if len(pc_list) > 0:
-                    rospy.loginfo("3d point tf pub")
-                    rospy.loginfo("pose = "+str(object_tf[0])+str(object_tf[1])+str(object_tf[2]))
-                    obj_pose_x, obj_pose_y, obj_pose_z = pc_list[0]
-                    object_tf =  [obj_pose_z, -obj_pose_x, -obj_pose_y] 
-                    tf_id = str(category)                    
-                    self._tfpub.sendTransform((object_tf),
-                                                     tf.transformations.quaternion_from_euler(
-                                                         0, 0, 0),
-                                                     rospy.Time.now(),
-                                                     tf_id,
-                                                     'camera_link')
+            if self.print_outcome:
+                rospy.loginfo("x_center = " + str(x_center))
+                rospy.loginfo("y_center = " + str(y_center))
+            # if self.depth_sub_switch is True:  
+            #     rospy.loginfo("received")                                
+            #     rospy.loginfo("pointcloud data size  = " + str(len(self.pointcloud_data.data)))
+            #     rospy.loginfo("pointcloud row_step  = " + str((self.pointcloud_data.row_step)))
+            #     rospy.loginfo("pointcloud point_step  = " + str((self.pointcloud_data.point_step)))
+            #     rospy.loginfo("count_tmp  = " + str((self.count_tmp)))
+            #     if self.count_tmp > self.pointcloud_data.row_step:
+            #         self.count_tmp = 0
+            #     pc_list = list(pc2.read_points(self.pointcloud_data,skip_nans=True,field_names=('x', 'y', 'z'),uvs=[(self.count_tmp, 1)]))                
+            #     self.count_tmp=self.count_tmp+1
+            #     rospy.loginfo("pc_list len = " + str(len(pc_list)))
+            #     if len(pc_list) > 0:                    
+            #         obj_pose_x, obj_pose_y, obj_pose_z = pc_list[0]
+            #         rospy.loginfo("x  = " + str(obj_pose_z)+ "  y  = " + str(-obj_pose_x)+"  z  = " + str(-obj_pose_y))                    
+            #         object_tf =  [obj_pose_z, -obj_pose_x, -obj_pose_y] 
+            #         tf_id = str(category)                    
+            #         self._tfpub.sendTransform((object_tf),
+            #                                          tf.transformations.quaternion_from_euler(
+            #                                              0, 0, 0),
+            #                                          rospy.Time.now(),
+            #                                          tf_id,
+            #                                          'camera_link')
         return detection_results
 
     @timeit_ros
@@ -169,6 +179,23 @@ class YOLORos(object):
             detection_results.image_header = current_msg.header
             # construct message
             self._write_message(detection_results, boxes, scores, classes)
+            #######################################################TEST
+            # if self.depth_sub_switch is True:  
+            #     rospy.loginfo("received")                                
+            #     rospy.loginfo("pointcloud data size  = " + str(len(self.pointcloud_data.data)))
+            #     rospy.loginfo("pointcloud row_step  = " + str((self.pointcloud_data.row_step)))
+            #     rospy.loginfo("pointcloud point_step  = " + str((self.pointcloud_data.point_step)))
+            #     rospy.loginfo("count_tmp  = " + str((self.count_tmp)))
+            #     if self.count_tmp > self.pointcloud_data.row_step:
+            #         self.count_tmp = 0
+            #     pc_list = list(pc2.read_points(self.pointcloud_data,skip_nans=True,field_names=('x', 'y', 'z'),uvs=[(self.count_tmp, 0)]))                
+            #     self.count_tmp=self.count_tmp+1
+            #     rospy.loginfo("pc_list len = " + str(len(pc_list)))
+            #     if len(pc_list) > 0:                    
+            #         obj_pose_x, obj_pose_y, obj_pose_z = pc_list[0]
+            #         rospy.loginfo("x  = " + str(obj_pose_z)+ "  y  = " + str(-obj_pose_x)+"  z  = " + str(-obj_pose_y))                    
+            #         object_tf =  [obj_pose_z, -obj_pose_x, -obj_pose_y]      
+            # #######################################################TEST              
             # send message
             try:
                 rospy.logdebug("[trt_yolo_ros] publishing")

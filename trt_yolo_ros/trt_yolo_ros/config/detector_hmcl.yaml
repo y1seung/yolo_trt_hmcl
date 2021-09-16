@@ -2,11 +2,11 @@
 publish_rate: 10
 
 # Would you like to publish visualization, might slow don the process
-publish_image: true
-
+publish_image: false
+print_outcome: false
 # paths to all of the files
-weights_path: "/home/hmcl/perception_ws/src/trt_yolo_ros/trt_yolo_ros/weights"
-config_path: "/home/hmcl/perception_ws/src/trt_yolo_ros/trt_yolo_ros/config"
+weights_path: "/home/hmcl/data/perception_ws/src/trt_yolo_ros/trt_yolo_ros/weights"
+config_path: "/home/hmcl/data/perception_ws/src/trt_yolo_ros/trt_yolo_ros/config"
 label_filename: "hmcl_labels.txt"
 
 # YOLO configs
