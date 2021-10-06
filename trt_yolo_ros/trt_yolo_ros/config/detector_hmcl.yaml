@@ -25,3 +25,4 @@ postprocessor_cfg: "yolo_postprocess_config.json"
 
 # Device to run the inference on. Sorry, no multiple devices for now
 cuda_device: 0
+IMAGE_PATH: "/home/hmcl/data/perception_ws/src/trt_yolo_ros/trt_yolo_ros/IMAGE"

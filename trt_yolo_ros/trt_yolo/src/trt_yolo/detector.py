@@ -26,6 +26,7 @@ class DarknetTRT(object):
         postprocessor_cfg="yolo_postprocess_config.json",
         cuda_device=0,
         show_image=False,
+        IMAGE_PATH="./IMAGE/"
     ):
         """
         DarknetTRT is a class for using yolo tensorrt detector
@@ -72,6 +73,7 @@ class DarknetTRT(object):
             nms_threshold=nms_threshold,
             input_resolution=self.yolo_h_w,
             class_num=len(self.categories),
+            IMAGE_PATH=IMAGE_PATH
         )
         self.drawer = None
         if show_image:
