@@ -8,6 +8,8 @@ import datetime
 
 from utils import read_json
 
+IMAGE_PATH_ = None
+class_dict = {}
 
 class PostprocessYOLO(object):
     """Class for post-processing the three outputs tensors from YOLO.
@@ -46,6 +48,7 @@ class PostprocessYOLO(object):
         self.masks = postprocessor_cfg["masks"]
         self.anchors = postprocessor_cfg["anchors"]
         self.IMAGE_PATH = IMAGE_PATH
+        IMAGE_PATH_ = IMAGE_PATH
         self.output_shapes = [
             tuple([a, b, input_resolution[0] // c, input_resolution[1] // d,])
             for a, b, c, d in postprocessor_cfg["output_shapes"]
@@ -321,5 +324,14 @@ class Visualization(object):
                 self.thickness,
                 cv2.LINE_AA,
             )
-            cv2.imwrite(self.IMAGE_PATH+label+cur_time+".jpg",image_raw)
+            if IMAGE_PATH_ is not None:
+                # 한 객체를 보고 20초 후에 다시 봤을 때만 이미지 저장
+                cur_time_in_sec = int(datetime.datetime.now().strftime('%s'))
+                if label in class_dict.keys():
+                    if  cur_time_in_sec - class_dict[label] > 20:
+                        cv2.imwrite(IMAGE_PATH_+label+cur_time+".jpg",image_raw)
+                    
+                class_dict[label] = cur_time_in_sec
+                
+
         return image_raw

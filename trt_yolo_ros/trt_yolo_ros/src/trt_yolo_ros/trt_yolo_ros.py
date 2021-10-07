@@ -147,15 +147,15 @@ class YOLORos(object):
             rospy.logdebug("[trt_yolo_ros] image recieved")
 
     def extractingObjectFromLidar(self, lidar_data,left,right):
-        start_index = 460-(left//4)
-        end_index = 640-(right//4)
+        start_index = int(460+(right//4))
+        end_index = int(640-(left//4))
         objectRange = lidar_data.ranges[start_index:end_index]
         object_data = LaserScan()
         object_data.header = lidar_data.header
         object_data.angle_min = (start_index*(np.pi/720))-((3/4)*np.pi)
         object_data.angle_max = (end_index*(np.pi/720))-((3/4)*np.pi)
         object_data.angle_increment = lidar_data.angle_increment
-        object_data.time_increment = lidar_data.time_increment
+        object_data.time_increment = lidar_data.t햣ime_increment
         object_data.scan_time = lidar_data.scan_time
         object_data.range_min = lidar_data.range_min
         object_data.range_max = lidar_data.range_max
@@ -233,7 +233,7 @@ class YOLORos(object):
                     self.object_pose.pose.orientation.z = 0.0
                     self.object_pose.pose.orientation.w = 1.0
 
-                    self._pub_object.publish(self.objet_pose)
+                    self._pub_object.publish(self.object_pose)
         return detection_results
 
     @timeit_ros
